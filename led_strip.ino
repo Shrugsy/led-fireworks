@@ -39,24 +39,44 @@ uint32_t getRandomColor()
 
 typedef struct
 {
-  String name;
   int *head;
   uint32_t *color;
 } Worm;
 
-const int NUM_MAX_WORMS = 3;
+const int NUM_MAX_WORMS = 10;
 
 int head0 = -1;
 int head1 = -1;
 int head2 = -1;
+int head3 = -1;
+int head4 = -1;
+int head5 = -1;
+int head6 = -1;
+int head7 = -1;
+int head8 = -1;
+int head9 = -1;
 uint32_t color0 = getRandomColor();
 uint32_t color1 = getRandomColor();
 uint32_t color2 = getRandomColor();
+uint32_t color3 = getRandomColor();
+uint32_t color4 = getRandomColor();
+uint32_t color5 = getRandomColor();
+uint32_t color6 = getRandomColor();
+uint32_t color7 = getRandomColor();
+uint32_t color8 = getRandomColor();
+uint32_t color9 = getRandomColor();
 
 Worm worms[NUM_MAX_WORMS] = {
-    {"bob", &head0, &color0},
-    {"myrtle", &head1, &color1},
-    {"bear", &head2, &color2},
+    {&head0, &color0},
+    {&head1, &color1},
+    {&head2, &color2},
+    {&head3, &color3},
+    {&head4, &color4},
+    {&head5, &color5},
+    {&head6, &color6},
+    {&head7, &color7},
+    {&head8, &color8},
+    {&head9, &color9},
 };
 
 /**
@@ -66,7 +86,8 @@ void setup()
 {
   pinMode(MICROPHONE_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(MICROPHONE_PIN), startWorm, RISING);
-  pixels.begin(); // INITIALIZE neopixel strip object
+  pixels.begin();
+  pixels.setBrightness(50);
   Serial.begin(9600);
 }
 
@@ -93,17 +114,21 @@ void startWorm()
     return;
   }
 
+  Serial.println("\nTrying to start a worm");
+
+  // find the first worm not on the strip and add it to the strip
   for (int i = 0; i < NUM_MAX_WORMS; i++)
   {
     Worm worm = worms[i];
-    if (*worm.head == -1)
+    if (!isWormOnStrip(*worm.head))
     {
+      Serial.println("Starting worm at index " + String(i));
       *worm.head = 0;
       *worm.color = getRandomColor();
-      lastStart = millis();
-      return;
+      break;
     }
   }
+  lastStart = millis();
 }
 
 /**
@@ -127,19 +152,28 @@ void fillWorm(int wormHeadIdx, uint32_t color)
  */
 void tickLights()
 {
-
   for (int i = 0; i < NUM_MAX_WORMS; i++)
   {
     Worm worm = worms[i];
-    if (*worm.head >= 0)
+    if (isWormOnStrip(*worm.head))
     {
       fillWorm(*worm.head, *worm.color);
       *worm.head += 1;
     }
-    if ((*worm.head - WORM_LENGTH) >= NUM_PIXELS)
+    if (isWormPastStrip(*worm.head))
     {
       *worm.head = -1;
     }
   }
   pixels.show();
+}
+
+bool isWormOnStrip(int wormHead)
+{
+  return wormHead >= 0;
+}
+
+bool isWormPastStrip(int wormHead)
+{
+  return (wormHead - WORM_LENGTH) >= NUM_PIXELS;
 }
