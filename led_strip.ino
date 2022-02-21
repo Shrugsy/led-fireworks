@@ -96,7 +96,7 @@ void setup()
  */
 void loop()
 {
-  tickLights();
+  tickWorms();
   delay(DELAY);
 }
 
@@ -120,7 +120,7 @@ void startWorm()
   for (int i = 0; i < NUM_MAX_WORMS; i++)
   {
     Worm worm = worms[i];
-    if (!isWormOnStrip(*worm.head))
+    if (!isWormOnStrip(worm))
     {
       Serial.println("Starting worm at index " + String(i));
       *worm.head = 0;
@@ -132,10 +132,36 @@ void startWorm()
 }
 
 /**
+ * Handles checking each worm to fill, and incrementing the worm where necessary.
+ */
+void tickWorms()
+{
+  for (int i = 0; i < NUM_MAX_WORMS; i++)
+  {
+    Worm worm = worms[i];
+    if (isWormOnStrip(worm))
+    {
+      // fill the worm and move it for the next tick
+      fillWorm(worm);
+      *worm.head += 1;
+    }
+    if (isWormPastStrip(worm))
+    {
+      // reset the worm
+      *worm.head = -1;
+    }
+  }
+  pixels.show();
+}
+
+/**
  * Fills a worm based on the provided head index and colour
  */
-void fillWorm(int wormHeadIdx, uint32_t color)
+void fillWorm(Worm worm)
 {
+  int wormHeadIdx = *worm.head;
+  uint32_t wormColor = *worm.color;
+
   int count = wormHeadIdx < WORM_LENGTH - 1 ? wormHeadIdx + 1 : WORM_LENGTH;
   int theoreticalWormTail = wormHeadIdx - WORM_LENGTH + 1;
   int wormTail = theoreticalWormTail < 0 ? 0 : theoreticalWormTail;
@@ -144,36 +170,21 @@ void fillWorm(int wormHeadIdx, uint32_t color)
     pixels.setPixelColor(wormTail - 1, 0, 0, 0);
   }
 
-  pixels.fill(color, wormTail, count);
+  pixels.fill(wormColor, wormTail, count);
 }
 
 /**
- * Handles checking each worm to fill, and incrementing the worm where necessary.
+ * Returns whether the worm head provided
  */
-void tickLights()
+bool isWormOnStrip(Worm worm)
 {
-  for (int i = 0; i < NUM_MAX_WORMS; i++)
-  {
-    Worm worm = worms[i];
-    if (isWormOnStrip(*worm.head))
-    {
-      fillWorm(*worm.head, *worm.color);
-      *worm.head += 1;
-    }
-    if (isWormPastStrip(*worm.head))
-    {
-      *worm.head = -1;
-    }
-  }
-  pixels.show();
+  return *worm.head >= 0;
 }
 
-bool isWormOnStrip(int wormHead)
+/**
+ * Returns whether the worm is past the end of the strip
+ */
+bool isWormPastStrip(Worm worm)
 {
-  return wormHead >= 0;
-}
-
-bool isWormPastStrip(int wormHead)
-{
-  return (wormHead - WORM_LENGTH) >= NUM_PIXELS;
+  return (*worm.head - WORM_LENGTH) >= NUM_PIXELS;
 }
