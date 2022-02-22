@@ -4,6 +4,10 @@ Clap activated LED firework display for arduino-based micro-controllers.
 
 An ESP32 has been used, but can be swapped out for simpler boards such as the Arduino UNO, nano etc.
 
+In the demo below, the project is powered from a 10,000mAh power bank with an output rated at 5V, 3A. This output is able to support a light strip with a length of 144 pixels (actual amount 240), with pixel brightness set to 35.
+
+![demo](images/demo.mov)
+
 ### Equipment
 
 - [ESP32 Board](https://www.jaycar.com.au/esp32-main-board-with-wifi-and-bluetooth-communication/p/XC3800) (Can be substituted with Arduino UNO, nano etc.)
@@ -12,6 +16,8 @@ An ESP32 has been used, but can be swapped out for simpler boards such as the Ar
 - [Breadboard](https://www.jaycar.com.au/arduino-compatible-breadboard-with-400-tie-points/p/PB8820)
 
 Other equipment such as jumper cables, double sided tape etc. not included above.
+
+![equipment](images/board.jpg)
 
 ### Troubleshooting
 
