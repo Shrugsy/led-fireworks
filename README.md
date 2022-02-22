@@ -6,7 +6,7 @@ An ESP32 has been used, but can be swapped out for simpler boards such as the Ar
 
 In the demo below, the project is powered from a 10,000mAh power bank with an output rated at 5V, 3A. This output is able to support a light strip with a length of 144 pixels (actual amount 240), with pixel brightness set to 35.
 
-![demo](images/demo.mp4)
+https://user-images.githubusercontent.com/22929669/155153273-a2074d30-a07b-4113-948b-97a3ead69aac.mp4
 
 ### Equipment
 
@@ -17,7 +17,7 @@ In the demo below, the project is powered from a 10,000mAh power bank with an ou
 
 Other equipment such as jumper cables, double sided tape etc. not included above.
 
-![equipment](images/board.jpg)
+![board](https://user-images.githubusercontent.com/22929669/155153296-7f412b15-b31b-42dc-9a46-9c5c4e2bb965.jpg)
 
 ### Troubleshooting
 
