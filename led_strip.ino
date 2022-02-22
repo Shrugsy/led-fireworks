@@ -14,7 +14,7 @@ void setup()
   pinMode(MICROPHONE_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(MICROPHONE_PIN), startWorm, RISING);
   pixels.begin();
-  pixels.setBrightness(50);
+  pixels.setBrightness(35);
   Serial.begin(9600);
 }
 
@@ -24,5 +24,5 @@ void setup()
 void loop()
 {
   tickWorms();
-  delay(50);
+  delay(25);
 }

@@ -7,7 +7,7 @@
 
 //ESP32
 const int STRIP_PIN = 32;   // Digital pin connected to DIN on the led strip
-const int NUM_PIXELS = 120; // How many individual LEDs are connected on the strip
+const int NUM_PIXELS = 144; // How many individual LEDs are connected on the strip
 const int WORM_LENGTH = 12; // How long a single light of worms is
 
 const int NUM_MAX_WORMS = 10; // How many worms can be active on the strip at once
