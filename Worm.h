@@ -1,14 +1,16 @@
 #include <Adafruit_NeoPixel.h>
 
 //ARDUINO
-// const int STRIP_PIN = 6;      // Digital pin connected to DIN on the led strip
-// const int NUM_PIXELS = 20;    // How many individual LEDs are connected on the strip
-// const int WORM_LENGTH = 3;    // How long a single light of worms is
+// const int STRIP_PIN = 6;   // Digital pin connected to DIN on the led strip
+// const int NUM_PIXELS = 20; // How many individual LEDs are connected on the strip
+// const int WORM_LENGTH = 3; // How long a single light of worms is
 
 //ESP32
 const int STRIP_PIN = 32;   // Digital pin connected to DIN on the led strip
 const int NUM_PIXELS = 120; // How many individual LEDs are connected on the strip
 const int WORM_LENGTH = 12; // How long a single light of worms is
+
+const int NUM_MAX_WORMS = 10; // How many worms can be active on the strip at once
 
 Adafruit_NeoPixel pixels(NUM_PIXELS, STRIP_PIN, NEO_GRB + NEO_KHZ800); //set up pixels object
 
@@ -20,6 +22,7 @@ uint32_t light_blue = pixels.Color(0, 0, 100); // rgb(0,100,100)
 uint32_t blue = pixels.Color(0, 0, 100);       // rgb(0,0,100)
 uint32_t indigo = pixels.Color(150, 0, 150);   // rgb(50,0,100)
 uint32_t magenta = pixels.Color(150, 0, 150);  // rgb(100,0,100)
+uint32_t unlit = pixels.Color(0, 0, 0);        // rgb(0,0,0)
 
 const int NUM_COLOURS = 8;
 uint32_t colorList[NUM_COLOURS]{red, orange, yellow, green, light_blue, blue, indigo, magenta};
@@ -33,63 +36,68 @@ uint32_t getRandomColor()
     return colorList[index];
 }
 
-typedef struct
+class Worm
 {
-    int *head;
-    uint32_t *color;
-} Worm;
+private:
+    int head = -1;
+    uint32_t color = unlit;
 
-const int NUM_MAX_WORMS = 10;
+public:
+    /**
+     * Returns the worm's head position
+     */
+    int getHead()
+    {
+        return head;
+    }
+    /**
+     * Returns the worm's color
+     */
+    uint32_t getColor()
+    {
+        return color;
+    }
+    /**
+     * Returns whether the worm is currently on the strip
+     */
+    bool isOnStrip()
+    {
+        return head >= 0;
+    }
 
-int head0 = -1;
-int head1 = -1;
-int head2 = -1;
-int head3 = -1;
-int head4 = -1;
-int head5 = -1;
-int head6 = -1;
-int head7 = -1;
-int head8 = -1;
-int head9 = -1;
-uint32_t color0 = getRandomColor();
-uint32_t color1 = getRandomColor();
-uint32_t color2 = getRandomColor();
-uint32_t color3 = getRandomColor();
-uint32_t color4 = getRandomColor();
-uint32_t color5 = getRandomColor();
-uint32_t color6 = getRandomColor();
-uint32_t color7 = getRandomColor();
-uint32_t color8 = getRandomColor();
-uint32_t color9 = getRandomColor();
+    /**
+     * Returns whether the worm is past the strip
+     */
+    bool isPastStrip()
+    {
+        return (head - WORM_LENGTH) >= NUM_PIXELS;
+    }
 
-Worm worms[NUM_MAX_WORMS] = {
-    {&head0, &color0},
-    {&head1, &color1},
-    {&head2, &color2},
-    {&head3, &color3},
-    {&head4, &color4},
-    {&head5, &color5},
-    {&head6, &color6},
-    {&head7, &color7},
-    {&head8, &color8},
-    {&head9, &color9},
+    /**
+     * Positions the worm to start wriggling, and assigns a color
+     */
+    void start()
+    {
+        head = 0;
+        color = getRandomColor();
+    }
+    /**
+     * Moves the worm forward one space
+     */
+    void wriggle()
+    {
+        head += 1;
+    }
+    /**
+     * Resets the worm position off the strip
+     */
+    void reset()
+    {
+        head = -1;
+    }
 };
 
-/**
- * Returns whether the worm head provided
- */
-bool isWormOnStrip(Worm worm)
-{
-    return *worm.head >= 0;
-}
-
-/**
- * Returns whether the worm is past the end of the strip
- */
-bool isWormPastStrip(Worm worm)
-{
-    return (*worm.head - WORM_LENGTH) >= NUM_PIXELS;
-}
+Worm worms[NUM_MAX_WORMS] = {};
 
 volatile int lastStart = 0;
 
@@ -105,17 +113,12 @@ void startWorm()
         return;
     }
 
-    Serial.println("\nTrying to start a worm");
-
     // find the first worm not on the strip and add it to the strip
     for (int i = 0; i < NUM_MAX_WORMS; i++)
     {
-        Worm worm = worms[i];
-        if (!isWormOnStrip(worm))
+        if (!worms[i].isOnStrip())
         {
-            Serial.println("Starting worm at index " + String(i));
-            *worm.head = 0;
-            *worm.color = getRandomColor();
+            worms[i].start();
             break;
         }
     }
@@ -125,20 +128,17 @@ void startWorm()
 /**
  * Fills a worm based on the provided head index and colour
  */
-void fillWorm(Worm worm)
+void fillWorm(int headIdx, uint32_t color)
 {
-    int wormHeadIdx = *worm.head;
-    uint32_t wormColor = *worm.color;
-
-    int count = wormHeadIdx < WORM_LENGTH - 1 ? wormHeadIdx + 1 : WORM_LENGTH;
-    int theoreticalWormTail = wormHeadIdx - WORM_LENGTH + 1;
+    int count = headIdx < WORM_LENGTH - 1 ? headIdx + 1 : WORM_LENGTH;
+    int theoreticalWormTail = headIdx - WORM_LENGTH + 1;
     int wormTail = theoreticalWormTail < 0 ? 0 : theoreticalWormTail;
     if (wormTail - 1 >= 0)
     {
         pixels.setPixelColor(wormTail - 1, 0, 0, 0);
     }
 
-    pixels.fill(wormColor, wormTail, count);
+    pixels.fill(color, wormTail, count);
 }
 
 /**
@@ -148,17 +148,14 @@ void tickWorms()
 {
     for (int i = 0; i < NUM_MAX_WORMS; i++)
     {
-        Worm worm = worms[i];
-        if (isWormOnStrip(worm))
+        if (worms[i].isOnStrip())
         {
-            // fill the worm and move it for the next tick
-            fillWorm(worm);
-            *worm.head += 1;
+            fillWorm(worms[i].getHead(), worms[i].getColor());
+            worms[i].wriggle();
         }
-        if (isWormPastStrip(worm))
+        if (worms[i].isPastStrip())
         {
-            // reset the worm
-            *worm.head = -1;
+            worms[i].reset();
         }
     }
     pixels.show();
