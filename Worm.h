@@ -3,12 +3,10 @@
 //ARDUINO
 // const int STRIP_PIN = 6;   // Digital pin connected to DIN on the led strip
 // const int NUM_PIXELS = 20; // How many individual LEDs are connected on the strip
-// const int WORM_LENGTH = 3; // How long a single light of worms is
 
 //ESP32
 const int STRIP_PIN = 32;   // Digital pin connected to DIN on the led strip
 const int NUM_PIXELS = 144; // How many individual LEDs are connected on the strip
-const int WORM_LENGTH = 12; // How long a single light of worms is
 
 const int NUM_MAX_WORMS = 10; // How many worms can be active on the strip at once
 
@@ -41,6 +39,7 @@ class Worm
 private:
     int head = -1;
     uint32_t color = unlit;
+    int length = 4;
 
 public:
     /**
@@ -58,6 +57,13 @@ public:
         return color;
     }
     /**
+     * Returns the worm's length
+     */
+    uint32_t getLength()
+    {
+        return length;
+    }
+    /**
      * Returns whether the worm is currently on the strip
      */
     bool isOnStrip()
@@ -70,7 +76,7 @@ public:
      */
     bool isPastStrip()
     {
-        return (head - WORM_LENGTH) >= NUM_PIXELS;
+        return (head - length) >= NUM_PIXELS;
     }
 
     /**
@@ -80,6 +86,7 @@ public:
     {
         head = 0;
         color = getRandomColor();
+        length = random(4, 12);
     }
     /**
      * Moves the worm forward one space
@@ -128,10 +135,10 @@ void startWorm()
 /**
  * Fills a worm based on the provided head index and colour
  */
-void fillWorm(int headIdx, uint32_t color)
+void fillWorm(int headIdx, int length, uint32_t color)
 {
-    int count = headIdx < WORM_LENGTH - 1 ? headIdx + 1 : WORM_LENGTH;
-    int theoreticalWormTail = headIdx - WORM_LENGTH + 1;
+    int count = headIdx < length - 1 ? headIdx + 1 : length;
+    int theoreticalWormTail = headIdx - length + 1;
     int wormTail = theoreticalWormTail < 0 ? 0 : theoreticalWormTail;
     if (wormTail - 1 >= 0)
     {
@@ -150,7 +157,7 @@ void tickWorms()
     {
         if (worms[i].isOnStrip())
         {
-            fillWorm(worms[i].getHead(), worms[i].getColor());
+            fillWorm(worms[i].getHead(), worms[i].getLength(), worms[i].getColor());
             worms[i].wriggle();
         }
         if (worms[i].isPastStrip())
